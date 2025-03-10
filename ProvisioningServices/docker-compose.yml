@@ -1,0 +1,59 @@
+version: '3.7'
+
+# O presente projeto tem o intuito de:
+# - Criar uma infraestrutura composta por:
+#   - Um servidor Web (Apache + PHP + WordPress)
+#   - Um banco de dados MySQL
+#   - Um web proxy com NGINX para receber requisições do cliente e encaminhá-las ao servidor Web
+# - O cliente final envia uma requisição GET para localhost:8080
+# - O Proxy recebe a requisição na porta 8080 e encaminha para o WordPress hospedado internamente na porta 80
+# - Cada serviço é executado em seu próprio container via Docker Compose
+
+services:
+  database:
+    image: mysql:5.7 
+    container_name: my
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "3306:3306"
+    networks:
+      - wordpress
+    volumes:
+      - db_data:/var/lib/mysql
+
+  wp:
+    image: wordpress:latest
+    container_name: webserver
+    volumes:
+      - ./wp-app:/var/www/html
+    environment:
+      WORDPRESS_DB_HOST: database:3306
+      WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
+      WORDPRESS_DB_USER: root
+      WORDPRESS_DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    depends_on:
+      - database
+    networks:
+      - wordpress
+    expose:
+      - "80" 
+
+  webproxy:
+    build: ./nginx_custom
+    container_name: webproxy
+    ports:
+      - "8080:8080"
+    networks:
+      - wordpress
+    depends_on:
+      - wp
+
+volumes:
+  db_data:
+  wordpress_data:
+
+networks:
+  wordpress:
+    driver: bridge
