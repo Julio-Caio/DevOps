@@ -16,7 +16,7 @@ Vagrant.configure("2") do |config|
 
   # Configuração do nome da VM
   config.vm.define "Julio01-Julia02-Ryan03" do |aluno|
-    aluno.vm.hostname = "Debian-Server-12"
+    aluno.vm.hostname = "Ubuntu-2204"
     # Rede privada
     aluno.vm.network "private_network", ip: "192.168.57.10"
     # Rede pública
