@@ -34,9 +34,9 @@
 
     - name: Instalando os pacotes docker
       remote_user: "{{ usuario }}"
-      package:
+      apt:
         name: "{{ item }}"
-        statee: present
+        state: present
       with_items:
         - apt-transport-https
         - ca-certificates
@@ -88,9 +88,23 @@
 
     - name: Movendo o docker-compose.yaml
       copy:
-        src: docker-compose.yaml
-        dest: /home/vagrant/docker/docker-compose.yaml
-        mode: 0644
+        src: docker-compose.yml
+        dest: /home/vagrant/docker/docker-compose.yml
+        mode: "0644"
+
+    - name: Copiando o diretório nginx_custom para o servidor remoto
+      copy:
+        src: ./nginx_custom/
+        dest: /home/vagrant/docker/nginx_custom
+        owner: vagrant
+        mode: "0755"
+
+    - name: Copiando o .env para o servidor remoto
+      copy:
+        src: .env
+        dest: /home/vagrant/docker/
+        owner: vagrant
+        mode: "0755"
 
     - name: Subindo containers com Docker Compose
       shell: docker-compose up -d
