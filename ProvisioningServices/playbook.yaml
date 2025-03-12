@@ -1,0 +1,102 @@
+---
+- name: Configuração do Servidor com Docker
+  hosts: all
+  become: yes
+  vars:
+    usuario: "vagrant"
+    primeiro_nome: "julio"
+    segundo_nome: "julia"
+    terceiro_nome: "ryan"
+
+# ///////////////////////////////////////////////////////////////////////////////////////////////////
+# Bloco de instalação básica
+
+  tasks:
+    - name: Definindo o novo hostname
+      hostname:
+        name: "server.{{ primeiro_nome }}.{{ segundo_nome }}.{{ terceiro_nome }}"
+
+    - name: Atualizando o /etc/hosts
+      lineinfile:
+        path: /etc/hosts
+        regexp: "^127.0.1.1"
+        line: "127.0.1.1 server.{{ primeiro_nome }}.{{ segundo_nome }}.{{ terceiro_nome }}"
+        state: present
+
+          #- name: Atualizar cache do APT
+          #package: update_cache=yes force_apt_get=yes
+ 
+    - name: Instalando Curl e Ping
+      package:
+        name: ["curl", "iputils-ping"]
+        state: present
+
+# ///////////////////////////////////////////////////////////////////////////////////////////////////
+# Bloco de instalação do Docker
+
+    - name: Instalando os pacotes docker
+      remote_user: "{{ usuario }}"
+      package:
+        name: "{{ item }}"
+        statee: present
+      with_items:
+        - apt-transport-https
+        - ca-certificates
+        - software-properties-common
+      tags:
+        - docker
+
+    - name: Adicionando a chave GPG
+      remote_user: "{{ usuario }}"
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+      tags: 
+        - docker
+
+    - name: Configurando o repositório estável
+      remote_user: "{{ usuario }}"
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable
+        state: present
+
+    - name: Instalando o Docker
+      package:
+        name: docker-ce
+        state: present
+
+    - name: Instalando o Docker Compose
+      shell: curl -fsSL https://github.com/docker/compose/releases/latest/download/docker-compose-Linux-x86_64 -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose
+
+# ///////////////////////////////////////////////////////////////////////////////////////////////////
+# Bloco de configuração do Docker
+
+    - name: Adicionar usuário ao grupo docker
+      user:
+        name: vagrant
+        groups: docker
+        append: yes
+
+    - name: Iniciar e habilitar Docker
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Criar diretório para Docker Compose
+      file:
+        path: /home/vagrant/docker
+        state: directory
+        mode: 0755
+
+    - name: Movendo o docker-compose.yaml
+      copy:
+        src: docker-compose.yaml
+        dest: /home/vagrant/docker/docker-compose.yaml
+        mode: 0644
+
+    - name: Subindo containers com Docker Compose
+      shell: docker-compose up -d
+      args:
+        chdir: /home/vagrant/docker
+
