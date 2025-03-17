@@ -92,20 +92,6 @@
         dest: /home/vagrant/docker/docker-compose.yml
         mode: "0644"
 
-    - name: Copiando o diretório nginx_custom para o servidor remoto
-      copy:
-        src: ./nginx_custom/
-        dest: /home/vagrant/docker/nginx_custom
-        owner: vagrant
-        mode: "0755"
-
-    - name: Copiando o .env para o servidor remoto
-      copy:
-        src: .env
-        dest: /home/vagrant/docker/
-        owner: vagrant
-        mode: "0755"
-
     - name: Subindo containers com Docker Compose
       shell: docker-compose up -d
       args:
