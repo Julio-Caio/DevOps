@@ -14,14 +14,14 @@ services:
     image: mysql:5.7 
     container_name: my
     environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: my
+      MYSQL_ROOT_PASSWORD: root
     ports:
       - "3306:3306"
     networks:
       - wordpress
     volumes:
-      - db_data:/var/lib/mysql
+      - my:/var/lib/mysql
 
   wp:
     image: wordpress:latest
@@ -30,9 +30,9 @@ services:
       - ./wp-app:/var/www/html
     environment:
       WORDPRESS_DB_HOST: database:3306
-      WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
+      WORDPRESS_DB_NAME: my
       WORDPRESS_DB_USER: root
-      WORDPRESS_DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      WORDPRESS_DB_PASSWORD: root
     depends_on:
       - database
     networks:
@@ -41,7 +41,7 @@ services:
       - "80" 
 
   webproxy:
-    build: ./nginx_custom
+    image: juliocaiordos/nginx_custom:latest
     container_name: webproxy
     ports:
       - "8080:8080"
@@ -51,7 +51,7 @@ services:
       - wp
 
 volumes:
-  db_data:
+  my:
   wordpress_data:
 
 networks:
